@@ -36,7 +36,6 @@ func init() {
 		"list-netdevs":             listNetDevs,
 		"cni-net":                  cniNet,
 		"cni-ipam":                 cniIPAM,
-		"expose-nat":               exposeNAT,
 		"bridge-ip":                bridgeIP,
 		"unique-id":                uniqueID,
 		"swarm-manager-peers":      swarmManagerPeers,
