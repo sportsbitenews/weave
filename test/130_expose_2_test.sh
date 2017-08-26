@@ -7,6 +7,7 @@ C2=10.2.1.37
 C3=10.2.2.34
 C4=10.2.2.37
 EXP=10.2.2.101
+EXP_CIDR=10.2.2.0/24
 UNIVERSE=10.2.3.0/24
 
 weave_on1() {
@@ -15,6 +16,10 @@ weave_on1() {
 
 run_on1() {
     assert_raises "run_on   $HOST1 $@"
+}
+
+run_on2() {
+    assert_raises "run_on   $HOST2 $@"
 }
 
 exec_on1() {
@@ -70,5 +75,17 @@ run_on1   "  $PING $C5"
 weave_on1 "hide"
 weave_on1 "hide"
 run_on1   "! $PING $C5"
+
+# host2 can reach containers after 'expose' and installing a route
+HOST1_IP=$($SSH $HOST1 getent ahosts $HOST1 | grep "RAW" | cut -d' ' -f1)
+ROUTE_OUT=$($SSH $HOST2 ip -o route get $HOST1_IP)
+ROUTE=$(echo $ROUTE_OUT | grep -o "via [^ ]*" || echo $ROUTE_OUT | awk '{print "via " $1}')
+run_on2   "sudo ip route add $EXP_CIDR $ROUTE"
+run_on2   "! $PING $C3"
+weave_on1 "expose $EXP/24"
+run_on2   "  $PING $C3"
+run_on2   "! $PING $C1"
+weave_on1 "hide"
+run_on2   "sudo ip route del $EXP_CIDR"
 
 end_suite
