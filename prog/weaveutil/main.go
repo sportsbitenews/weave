@@ -27,6 +27,7 @@ func init() {
 		"container-addrs":          containerAddrs,
 		"process-addrs":            processAddrs,
 		"stop-container":           stopContainer,
+		"kill-container":           killContainer,
 		"attach-container":         attach,
 		"detach-container":         detach,
 		"configure-arp":            configureARP,

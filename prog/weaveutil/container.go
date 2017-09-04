@@ -24,3 +24,22 @@ func stopContainer(args []string) error {
 	}
 	return nil
 }
+
+func killContainer(args []string) error {
+	if len(args) < 1 {
+		cmdUsage("kill-container", "<container-id> [<container-id2> ...]")
+	}
+
+	c, err := docker.NewVersionedClientFromEnv("1.18")
+	if err != nil {
+		return fmt.Errorf("unable to connect to docker: %s", err)
+	}
+
+	for _, containerID := range args {
+		err = c.KillContainer(docker.KillContainerOptions{ID: containerID, Signal: docker.SIGKILL})
+		if err != nil {
+			return fmt.Errorf("unable to stop container %s: %s", containerID, err)
+		}
+	}
+	return nil
+}

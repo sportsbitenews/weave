@@ -213,7 +213,7 @@ collect_cidr_args() {
 }
 
 kill_container() {
-    docker kill $1 >/dev/null 2>&1 || true
+    util_op kill-container $1 >/dev/null 2>&1 || true
 }
 
 ######################################################################
