@@ -611,17 +611,6 @@ check_not_running() {
     esac
 }
 
-# Given a container name or short ID in $1, ensure the specified
-# container exists and then print its full ID to stdout. If
-# it doesn't exist, print an error to stderr and
-# return with an indicative non-zero exit code.
-container_id() {
-    if ! docker inspect --format='{{.Id}}' $1 2>/dev/null ; then
-        echo "Error: No such container: $1" >&2
-        return 1
-    fi
-}
-
 http_call() {
     addr="$1"
     http_verb="$2"
@@ -931,7 +920,7 @@ collect_dns_add_remove_args() {
     check_running $CONTAINER_NAME
     if [ -n "$C" ] ; then
         check_running $C
-        CONTAINER=$(container_id $C)
+        CONTAINER=$(util_op container-id $C)
         [ $IP_COUNT -gt 0 ] || IP_ARGS=$(with_container_addresses echo_ips $CONTAINER)
     fi
 }
@@ -1470,7 +1459,7 @@ case "$COMMAND" in
             shift
         done
         [ $# -eq 1 ] || usage
-        CONTAINER=$(container_id $1)
+        CONTAINER=$(util_op container-id $1)
         create_bridge
         ipam_cidrs allocate $CONTAINER $CIDR_ARGS
         [ -n "$REWRITE_HOSTS" ] && rewrite_etc_hosts $DNS_EXTRA_HOSTS
@@ -1482,7 +1471,7 @@ case "$COMMAND" in
         collect_cidr_args "$@"
         shift $CIDR_ARG_COUNT
         [ $# -eq 1 ] || usage
-        CONTAINER=$(container_id $1)
+        CONTAINER=$(util_op container-id $1)
         ipam_cidrs lookup $CONTAINER $CIDR_ARGS
         util_op detach-container $CONTAINER $ALL_CIDRS >/dev/null
         when_weave_running with_container_fqdn $CONTAINER delete_dns_fqdn $ALL_CIDRS

@@ -6,6 +6,25 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
+func containerID(args []string) error {
+	if len(args) < 1 {
+		cmdUsage("container-id", "<container-name-or-short-id>")
+	}
+	containerID := args[0]
+
+	c, err := docker.NewVersionedClientFromEnv("1.18")
+	if err != nil {
+		return fmt.Errorf("unable to connect to docker: %s", err)
+	}
+
+	container, err := c.InspectContainer(containerID)
+	if err != nil {
+		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
+	}
+	fmt.Print(container.ID)
+	return nil
+}
+
 func stopContainer(args []string) error {
 	if len(args) < 1 {
 		cmdUsage("stop-container", "<container-id> [<container-id2> ...]")
