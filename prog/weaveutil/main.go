@@ -26,6 +26,7 @@ func init() {
 		"remove-plugin-network":    removePluginNetwork,
 		"container-addrs":          containerAddrs,
 		"process-addrs":            processAddrs,
+		"stop-container":           stopContainer,
 		"attach-container":         attach,
 		"detach-container":         detach,
 		"configure-arp":            configureARP,

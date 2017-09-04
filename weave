@@ -1299,10 +1299,10 @@ launch() {
 stop() {
     util_op remove-plugin-network weave || true
     warn_if_stopping_proxy_in_env
-    docker stop $CONTAINER_NAME >/dev/null 2>&1 || echo "Weave is not running." >&2
+    util_op stop-container $CONTAINER_NAME >/dev/null 2>&1 || echo "Weave is not running." >&2
     # In case user has upgraded from <v2.0 and left old containers running
-    docker stop $OLD_PLUGIN_CONTAINER_NAME >/dev/null 2>&1 || true
-    docker stop $OLD_PROXY_CONTAINER_NAME >/dev/null 2>&1 || true
+    util_op stop-container $OLD_PLUGIN_CONTAINER_NAME >/dev/null 2>&1 || true
+    util_op stop-container $OLD_PROXY_CONTAINER_NAME >/dev/null 2>&1 || true
     conntrack -D -p udp --dport $PORT >/dev/null 2>&1 || true
 }
 
