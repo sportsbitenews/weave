@@ -598,7 +598,7 @@ check_not_running() {
             return 1
             ;;
         "false "*" $3")
-            docker rm $2 >/dev/null
+            util_op remove-container $2 >/dev/null
             ;;
         true*)
             echo "Found another running container named '$2'. Aborting." >&2
@@ -1575,11 +1575,11 @@ case "$COMMAND" in
         esac
         stop
         for NAME in $CONTAINER_NAME $OLD_PROXY_CONTAINER_NAME $OLD_PLUGIN_CONTAINER_NAME ; do
-            docker rm -f $NAME >/dev/null 2>&1 || true
+            util_op remove-container -f $NAME >/dev/null 2>&1 || true
         done
         protect_against_docker_hang
         VOLUME_CONTAINERS=$(docker ps -qa --filter label=weavevolumes)
-        [ -n "$VOLUME_CONTAINERS" ] && docker rm -v $VOLUME_CONTAINERS  >/dev/null 2>&1 || true
+        [ -n "$VOLUME_CONTAINERS" ] && util_op remove-container -v $VOLUME_CONTAINERS  >/dev/null 2>&1 || true
         # weave-kube and v2-plugin put this file in different places; remove either
         rm -f $HOST_ROOT/var/lib/weave/weave-netdata.db >/dev/null 2>&1 || true
         rm -f $HOST_ROOT/var/lib/weave/weavedata.db     >/dev/null 2>&1 || true
