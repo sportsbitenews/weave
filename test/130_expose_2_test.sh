@@ -76,16 +76,12 @@ weave_on1 "hide"
 weave_on1 "hide"
 run_on1   "! $PING $C5"
 
-# host2 can reach containers after 'expose' and installing a route
-HOST1_IP=$($SSH $HOST1 getent ahosts $HOST1 | grep "RAW" | cut -d' ' -f1)
-ROUTE_OUT=$($SSH $HOST2 ip -o route get $HOST1_IP)
-ROUTE=$(echo $ROUTE_OUT | grep -o "via [^ ]*" || echo $ROUTE_OUT | awk '{print "via " $1}')
-run_on2   "sudo ip route add $EXP_CIDR $ROUTE"
-run_on2   "! $PING $C3"
+# Make $C3 reachable from $HOST2 w/o installing a route on $HOST2
+docker_on $HOST1 exec -d c3 nc -l -p 6666
 weave_on1 "expose $EXP/24"
-run_on2   "  $PING $C3"
-run_on2   "! $PING $C1"
+run_on1 "sudo iptables -t nat -A PREROUTING -p tcp --dport 6666 -j DNAT --to-destination $C3:6666"
+run_on2   "echo foo | nc -w1 $HOST1 6666"
 weave_on1 "hide"
-run_on2   "sudo ip route del $EXP_CIDR"
+run_on1  "sudo iptables -t nat -D PREROUTING -p tcp --dport 6666 -j DNAT --to-destination $C3:6666"
 
 end_suite
