@@ -1216,7 +1216,7 @@ launch() {
     fi
 
     # Create a data-only container for persistence data
-    if ! docker inspect -f ' ' $DB_CONTAINER_NAME > /dev/null 2>&1 ; then
+    if ! util_op container-state $DB_CONTAINER_NAME > /dev/null 2>&1 ; then
        protect_against_docker_hang
        docker create -v /weavedb --name=$DB_CONTAINER_NAME \
            --label=weavevolumes $WEAVEDB_IMAGE >/dev/null
@@ -1239,7 +1239,7 @@ launch() {
     proxy_args "$@"
     mkdir -p /var/run/weave
     # Create a data-only container to mount the weavewait files from
-    if ! docker inspect -f ' ' $VOLUMES_CONTAINER_NAME > /dev/null 2>&1 ; then
+    if ! util_op container-state $VOLUMES_CONTAINER_NAME > /dev/null 2>&1 ; then
        protect_against_docker_hang
        docker create -v /w -v /w-noop -v /w-nomcast --name=$VOLUMES_CONTAINER_NAME \
            --label=weavevolumes --entrypoint=/bin/false $EXEC_IMAGE >/dev/null
