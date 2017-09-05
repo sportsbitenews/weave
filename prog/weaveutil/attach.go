@@ -119,21 +119,35 @@ func detach(args []string) error {
 }
 
 func rewriteEtcHosts(args []string) error {
-	if len(args) < 4 {
-		cmdUsage("rewrite-etc-hosts", "<hosts-path> <fqdn> <image> <cidr>... [name:addr...]")
+	if len(args) < 3 {
+		cmdUsage("rewrite-etc-hosts", "<container-id> <image> <cidr> [name:addr...]")
 	}
-	hostsPath := args[0]
-	fqdn := args[1]
-	image := args[2]
+	containerID := args[0]
+	image := args[1]
+	cidrs := args[2]
+	extraHosts := args[3:]
+
+	c, err := docker.NewVersionedClientFromEnv("1.18")
+	if err != nil {
+		return fmt.Errorf("unable to connect to docker: %s", err)
+	}
+	container, err := c.InspectContainer(containerID)
+	if err != nil {
+		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
+	}
+
+	hostsPath := container.HostsPath
+	fqdn := container.Config.Hostname + "." + container.Config.Domainname
+
 	var ips []*net.IPNet
-	for _, cidr := range strings.Fields(args[3]) {
+	for _, cidr := range strings.Fields(cidrs) {
 		_, ipnet, err := net.ParseCIDR(cidr)
 		if err != nil {
 			return err
 		}
 		ips = append(ips, ipnet)
 	}
-	extraHosts := args[4:]
+
 	docker := os.Getenv("DOCKER_HOST")
 	if docker == "" {
 		docker = "unix:///var/run/docker.sock"

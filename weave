@@ -830,12 +830,9 @@ dns_args() {
 }
 
 rewrite_etc_hosts() {
-    HOSTS_PATH_AND_FQDN=$(docker inspect -f '{{.HostsPath}} {{.Config.Hostname}}.{{.Config.Domainname}}' $CONTAINER) || return 1
-    HOSTS=${HOSTS_PATH_AND_FQDN% *}
-    FQDN=${HOSTS_PATH_AND_FQDN#* }
     # rewrite /etc/hosts, unlinking the file (so Docker does not modify it again) but
     # leaving it with valid contents...
-    util_op rewrite-etc-hosts "$HOSTS" "$FQDN" "$EXEC_IMAGE" "$ALL_CIDRS" "$@"
+    util_op rewrite-etc-hosts "$CONTAINER" "$EXEC_IMAGE" "$ALL_CIDRS" "$@" || return 1
 }
 
 # Iff the container in $1 has an FQDN, invoke $2 as a command passing
