@@ -843,7 +843,7 @@ with_container_fqdn() {
     COMMAND_WCF="$2"
     shift 2
 
-    CONT_FQDN=$(docker inspect --format='{{.Config.Hostname}}.{{.Config.Domainname}}' $CONT 2>/dev/null) || return 0
+    CONT_FQDN=$(util_op container-fqdn $CONT 2>/dev/null) || return 0
     CONT_NAME=${CONT_FQDN%%.*}
     [ "$CONT_NAME" = "$CONT_FQDN" -o "$CONT_NAME." = "$CONT_FQDN" ] || $COMMAND_WCF "$CONT" "$CONT_FQDN" "$@"
 }

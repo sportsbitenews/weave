@@ -61,6 +61,26 @@ func containerState(args []string) error {
 	return nil
 }
 
+func containerFQDN(args []string) error {
+	if len(args) < 1 {
+		cmdUsage("container-fqdn", "<container-id>")
+	}
+	containerID := args[0]
+
+	c, err := docker.NewVersionedClientFromEnv("1.18")
+	if err != nil {
+		return fmt.Errorf("unable to connect to docker: %s", err)
+	}
+
+	container, err := c.InspectContainer(containerID)
+	if err != nil {
+		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
+	}
+
+	fmt.Print(container.Config.Hostname, ".", container.Config.Domainname)
+	return nil
+}
+
 func stopContainer(args []string) error {
 	if len(args) < 1 {
 		cmdUsage("stop-container", "<container-id> [<container-id2> ...]")
