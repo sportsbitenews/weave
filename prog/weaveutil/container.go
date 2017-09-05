@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 
 	docker "github.com/fsouza/go-dockerclient"
 )
@@ -22,6 +23,41 @@ func containerID(args []string) error {
 		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
 	}
 	fmt.Print(container.ID)
+	return nil
+}
+
+func containerState(args []string) error {
+	if len(args) < 1 {
+		cmdUsage("container-state", "<container-id> [<image-name-or-id>]")
+	}
+	containerID := args[0]
+
+	c, err := docker.NewVersionedClientFromEnv("1.18")
+	if err != nil {
+		return fmt.Errorf("unable to connect to docker: %s", err)
+	}
+
+	container, err := c.InspectContainer(containerID)
+	if err != nil {
+		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
+	}
+
+	if len(args) == 1 {
+		fmt.Print(container.State.StateString())
+	} else {
+		image := args[1]
+		match1, _ := regexp.MatchString(image, container.Image)
+		match2, _ := regexp.MatchString(image, container.Config.Image)
+		if match1 || match2 {
+			fmt.Print(container.State.StateString())
+		} else {
+			if container.State.Running {
+				fmt.Print("running image mismatch: ", container.Config.Image)
+			} else {
+				fmt.Print("image mismatch: ", container.Config.Image)
+			}
+		}
+	}
 	return nil
 }
 

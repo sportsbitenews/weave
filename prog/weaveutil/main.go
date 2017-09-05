@@ -27,6 +27,7 @@ func init() {
 		"container-addrs":          containerAddrs,
 		"process-addrs":            processAddrs,
 		"container-id":             containerID,
+		"container-state":          containerState,
 		"stop-container":           stopContainer,
 		"kill-container":           killContainer,
 		"remove-container":         removeContainer,

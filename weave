@@ -585,27 +585,47 @@ attach() {
 # functions for interacting with containers
 ######################################################################
 
-# Check that a container for component $1 named $2 with image $3 is not running
+# Print an error to stderr and return with an indicative exit status
+# if the container $1 does not exist or isn't running.
+check_running() {
+    if ! STATE=$(util_op container-state $1 2> /dev/null) ; then
+        echo  "$1 container is not present. Have you launched it?" >&2
+        return 1
+    elif [ "$STATE" = "restarting" ] ; then
+        echo "$1 container is restarting." >&2
+        return 2
+    elif [ "$STATE" != "running" ] ; then
+        echo "$1 container is not running." >&2
+        return 2
+    fi
+}
+
+# Execute $@ only if the weave container is running
+when_weave_running() {
+    ! check_running $CONTAINER_NAME 2>/dev/null || "$@"
+}
+
+# Check that a container $1 with image $2 is not running
 check_not_running() {
-    RUN_STATUS=$(docker inspect --format='{{.State.Running}} {{.State.Status}} {{.Config.Image}}' $2 2>/dev/null) || true
-    case ${RUN_STATUS%:*} in
-        "true restarting $3")
-            echo "$2 is restarting; you can stop it with 'weave stop'." >&2
+    STATE=$(util_op container-state $1 $2 2> /dev/null) || true
+    case ${STATE} in
+        "running")
+            echo "$1 is already running; you can stop it with 'weave stop'." >&2
             return 3
             ;;
-        "true "*" $3")
-            echo "$2 is already running; you can stop it with 'weave stop'." >&2
+        "created" | "paused" | "restarting")
+            echo "$1 is created, paused, or restarting; you can stop it with 'weave stop'." >&2
             return 1
             ;;
-        "false "*" $3")
-            util_op remove-container $2 >/dev/null
+        "exited" | "dead")
+            util_op remove-container $1 >/dev/null
             ;;
-        true*)
-            echo "Found another running container named '$2'. Aborting." >&2
+        "running image mismatch"*)
+            echo "Found another running container named '$1'. Aborting." >&2
             return 2
             ;;
-        false*)
-            echo "Found another container named '$2'. Aborting." >&2
+        "image mismatch"*)
+            echo "Found another container named '$1'. Aborting." >&2
             return 2
             ;;
     esac
@@ -820,26 +840,6 @@ rewrite_etc_hosts() {
     # rewrite /etc/hosts, unlinking the file (so Docker does not modify it again) but
     # leaving it with valid contents...
     util_op rewrite-etc-hosts "$HOSTS" "$FQDN" "$EXEC_IMAGE" "$ALL_CIDRS" "$@"
-}
-
-# Print an error to stderr and return with an indicative exit status
-# if the container $1 does not exist or isn't running.
-check_running() {
-    if ! STATUS=$(docker inspect --format='{{.State.Running}} {{.State.Restarting}}' $1 2>/dev/null) ; then
-        echo  "$1 container is not present. Have you launched it?" >&2
-        return 1
-    elif [ "$STATUS" = "true true" ] ; then
-        echo "$1 container is restarting." >&2
-        return 2
-    elif [ "$STATUS" != "true false" ] ; then
-        echo "$1 container is not running." >&2
-        return 2
-    fi
-}
-
-# Execute $@ only if the weave container is running
-when_weave_running() {
-    ! check_running $CONTAINER_NAME 2>/dev/null || "$@"
 }
 
 # Iff the container in $1 has an FQDN, invoke $2 as a command passing
@@ -1361,7 +1361,7 @@ case "$COMMAND" in
         detect_bridge_type && echo $BRIDGE_TYPE
         ;;
     launch)
-        check_not_running router $CONTAINER_NAME        $BASE_IMAGE
+        check_not_running $CONTAINER_NAME $BASE_IMAGE
         if http_call $HTTP_ADDR GET /status >/dev/null 2>&1 ; then
             echo "Weave Net is already running" >&2
             exit 1
