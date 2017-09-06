@@ -1322,7 +1322,7 @@ shift 1
 case "$COMMAND" in
     setup)
         for img in $IMAGE $EXEC_IMAGE $WEAVEDB_IMAGE ; do
-            docker pull $img
+            util_op pull-image $img
         done
         setup_cni
         ;;
