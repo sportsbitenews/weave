@@ -81,6 +81,28 @@ func containerFQDN(args []string) error {
 	return nil
 }
 
+func listContainers(args []string) error {
+	if len(args) < 1 {
+		cmdUsage("list-containers", "[<label>]")
+	}
+	label := args[0]
+
+	c, err := docker.NewVersionedClientFromEnv("1.18")
+	if err != nil {
+		return fmt.Errorf("unable to connect to docker: %s", err)
+	}
+
+	containers, err := c.ListContainers(docker.ListContainersOptions{All: true, Filters: map[string][]string{"label": []string{label}}})
+	if err != nil {
+		return fmt.Errorf("unable to list containers by label %s: %s", label, err)
+	}
+
+	for _, container := range containers {
+		fmt.Println(container.ID)
+	}
+	return nil
+}
+
 func stopContainer(args []string) error {
 	if len(args) < 1 {
 		cmdUsage("stop-container", "<container-id> [<container-id2> ...]")
