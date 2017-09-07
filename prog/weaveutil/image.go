@@ -14,11 +14,11 @@ func pullImage(args []string) error {
 	}
 	image := ""
 	tag := ""
-	image_parts := strings.Split(args[0], ":")
-	if len(image_parts) == 2 {
-		image, tag = image_parts[0], image_parts[1]
+	imageParts := strings.Split(args[0], ":")
+	if len(imageParts) == 2 {
+		image, tag = imageParts[0], imageParts[1]
 	} else {
-		image = image_parts[0]
+		image = imageParts[0]
 		tag = "latest"
 		fmt.Println("Using default tag: " + tag)
 	}
