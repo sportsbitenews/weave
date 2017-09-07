@@ -149,18 +149,6 @@ func runContainer(args []string) error {
 	image := args[0]
 	cmds := args[1:]
 
-	// fmt.Println(env)
-	// fmt.Println(name)
-	// fmt.Println(net)
-	// fmt.Println(pid)
-	// fmt.Println(privileged)
-	// fmt.Println(restart)
-	// fmt.Println(volumes)
-	// fmt.Println(volumesFrom)
-
-	// fmt.Println(image)
-	// fmt.Println(cmds)
-
 	c, err := docker.NewVersionedClientFromEnv("1.18")
 	if err != nil {
 		return fmt.Errorf("unable to connect to docker: %s", err)
