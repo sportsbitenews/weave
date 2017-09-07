@@ -123,7 +123,7 @@ docker_sock_options() {
 }
 
 docker_run_options() {
-    echo --privileged --net=host $(docker_sock_options)
+    echo --privileged --net host $(docker_sock_options)
 }
 
 exec_options() {
@@ -142,7 +142,7 @@ exec_options() {
 exec_remote() {
     docker $DOCKER_CLIENT_ARGS run --rm \
         $(docker_run_options) \
-        --pid=host \
+        --pid host \
         $(exec_options "$@") \
         -e DOCKERHUB_USER="$DOCKERHUB_USER" \
         -e WEAVE_VERSION \
@@ -256,7 +256,7 @@ fi
 ######################################################################
 
 # Default restart policy for router/proxy
-RESTART_POLICY="--restart=always"
+RESTART_POLICY="--restart always"
 BASE_IMAGE=$DOCKERHUB_USER/weave
 IMAGE=$BASE_IMAGE:$IMAGE_VERSION
 CONTAINER_NAME=${WEAVE_CONTAINER_NAME:-weave}
@@ -368,7 +368,7 @@ util_op() {
     if command_exists weaveutil ; then
         weaveutil "$@"
     else
-        docker run --rm --pid=host $(docker_run_options) \
+        docker run --rm --pid host $(docker_run_options) \
             --entrypoint=/usr/bin/weaveutil $EXEC_IMAGE "$@"
     fi
 }
@@ -1237,10 +1237,10 @@ launch() {
     # Set WEAVE_DOCKER_ARGS in the environment in order to supply
     # additional parameters, such as resource limits, to docker
     # when launching the weave container.
-    WEAVE_CONTAINER=$(docker run -d --name=$CONTAINER_NAME \
+    WEAVE_CONTAINER=$(util_op run-container --name $CONTAINER_NAME \
         $(docker_run_options) \
         $RESTART_POLICY \
-        --pid=host \
+        --pid host \
         --volumes-from $DB_CONTAINER_NAME \
         --volumes-from $VOLUMES_CONTAINER_NAME \
         $PROXY_VOLUMES \

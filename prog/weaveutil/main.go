@@ -31,6 +31,7 @@ func init() {
 		"container-id":             containerID,
 		"container-state":          containerState,
 		"container-fqdn":           containerFQDN,
+		"run-container":            runContainer,
 		"list-containers":          listContainers,
 		"stop-container":           stopContainer,
 		"kill-container":           killContainer,

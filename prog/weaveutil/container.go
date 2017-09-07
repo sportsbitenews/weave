@@ -81,6 +81,107 @@ func containerFQDN(args []string) error {
 	return nil
 }
 
+func runContainer(args []string) error {
+	env := []string{}
+	name := ""
+	net := ""
+	pid := ""
+	privileged := false
+	restart := docker.NeverRestart()
+	volumes := []string{}
+	volumesFrom := []string{}
+
+	done := false
+	for i := 0; i < len(args) && !done; {
+		switch args[i] {
+		case "-e", "--env":
+			env = append(env, args[i+1])
+			args = append(args[:i], args[i+2:]...)
+		case "--name":
+			name = args[i+1]
+			args = append(args[:i], args[i+2:]...)
+		case "--net":
+			net = args[i+1]
+			args = append(args[:i], args[i+2:]...)
+		case "--pid":
+			pid = args[i+1]
+			args = append(args[:i], args[i+2:]...)
+		case "--privileged":
+			privileged = true
+			args = append(args[:i], args[i+1:]...)
+		case "--restart":
+			restart = docker.RestartPolicy{Name: args[i+1]}
+			args = append(args[:i], args[i+2:]...)
+		case "-v", "--volume":
+			// Must dedup binds, otherwise, container fails creation
+			skip := false
+			for _, v := range volumes {
+				if v == args[i+1] {
+					skip = true
+				}
+			}
+			if !skip {
+				volumes = append(volumes, args[i+1])
+			}
+			args = append(args[:i], args[i+2:]...)
+		case "--volumes-from":
+			volumesFrom = append(volumesFrom, args[i+1])
+			args = append(args[:i], args[i+2:]...)
+		default:
+			done = true
+		}
+	}
+
+	if len(args) < 2 {
+		cmdUsage("run-container", `[options] <image> <cmd> [[<cmd-options>] <cmd-arg1> [<cmd-arg2> ...]]
+
+  -e, --env list                       Set environment variables
+      --name string                    Assign a name to the container
+      --net string                     Network Mode
+      --pid string                     PID namespace to use
+      --privileged                     Give extended privileges to this container
+      --restart string                 Restart policy to apply when a container exits (default "no")
+  -v, --volume list                    Bind mount a volume
+      --volumes-from list              Mount volumes from the specified container(s)
+`)
+	}
+
+	image := args[0]
+	cmds := args[1:]
+
+	// fmt.Println(env)
+	// fmt.Println(name)
+	// fmt.Println(net)
+	// fmt.Println(pid)
+	// fmt.Println(privileged)
+	// fmt.Println(restart)
+	// fmt.Println(volumes)
+	// fmt.Println(volumesFrom)
+
+	// fmt.Println(image)
+	// fmt.Println(cmds)
+
+	c, err := docker.NewVersionedClientFromEnv("1.18")
+	if err != nil {
+		return fmt.Errorf("unable to connect to docker: %s", err)
+	}
+
+	config := docker.Config{Image: image, Env: env, Cmd: cmds}
+	hostConfig := docker.HostConfig{NetworkMode: net, PidMode: pid, Privileged: privileged, RestartPolicy: restart, Binds: volumes, VolumesFrom: volumesFrom}
+	container, err := c.CreateContainer(docker.CreateContainerOptions{Name: name, Config: &config, HostConfig: &hostConfig})
+	if err != nil {
+		return fmt.Errorf("unable to create container: %s", err)
+	}
+
+	err = c.StartContainer(container.ID, &hostConfig)
+	if err != nil {
+		return fmt.Errorf("unable to start container: %s", err)
+	}
+
+	fmt.Print(container.ID)
+	return nil
+}
+
 func listContainers(args []string) error {
 	if len(args) < 1 {
 		cmdUsage("list-containers", "[<label>]")
