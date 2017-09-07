@@ -193,7 +193,7 @@ func listContainers(args []string) error {
 		return fmt.Errorf("unable to connect to docker: %s", err)
 	}
 
-	containers, err := c.ListContainers(docker.ListContainersOptions{All: true, Filters: map[string][]string{"label": []string{label}}})
+	containers, err := c.ListContainers(docker.ListContainersOptions{All: true, Filters: map[string][]string{"label": {label}}})
 	if err != nil {
 		return fmt.Errorf("unable to list containers by label %s: %s", label, err)
 	}
