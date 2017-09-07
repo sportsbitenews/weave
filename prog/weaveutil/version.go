@@ -25,9 +25,8 @@ func askVersion(args []string) error {
 		img, err := c.InspectImage(imageID)
 		if err != nil {
 			return fmt.Errorf("unable to find image %s: %s", imageID, err)
-		} else {
-			image = img.ID
 		}
+		image = img.ID
 	} else {
 		image = container.Image
 	}
