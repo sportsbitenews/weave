@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -95,7 +96,11 @@ func runContainer(args []string) error {
 	for i := 0; i < len(args) && !done; {
 		switch args[i] {
 		case "-e", "--env":
-			env = append(env, args[i+1])
+			if v := os.Getenv(args[i+1]); v != "" {
+				env = append(env, args[i+1]+"="+v)
+			} else {
+				env = append(env, args[i+1])
+			}
 			args = append(args[:i], args[i+2:]...)
 		case "--name":
 			name = args[i+1]
