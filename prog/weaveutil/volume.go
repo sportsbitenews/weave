@@ -22,7 +22,7 @@ func createVolumeContainer(args []string) error {
 
 	container, err := c.InspectContainer(containerName)
 	if err == nil {
-		fmt.Println("volume container already exists %s:%s", containerName, container.ID) 
+		fmt.Println("volume container already exists " + containerName + ":" + container.ID)
 		return nil
 	}
 
