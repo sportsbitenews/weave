@@ -241,6 +241,11 @@ case "$1" in
             fi
         fi
         ;;
+    setup)
+        for img in $IMAGE $EXEC_IMAGE $WEAVEDB_IMAGE ; do
+          docker pull $img
+        done
+        ;;
     *)
         [ "$2" = "--help" ] && usage_no_exit && exit 0
         ;;
@@ -1321,13 +1326,7 @@ COMMAND=$1
 shift 1
 
 case "$COMMAND" in
-    setup)
-        for img in $IMAGE $EXEC_IMAGE $WEAVEDB_IMAGE ; do
-            util_op pull-image $img
-        done
-        setup_cni
-        ;;
-    setup-cni)
+    setup|setup-cni)
         setup_cni
         ;;
     version)
