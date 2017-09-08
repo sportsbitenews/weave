@@ -102,7 +102,6 @@ usage() {
 
 handle_help_arg() {
     if [ "$1" = "--help" ] ; then
-        usage_no_exit
         exit 0
     fi
 }
@@ -217,28 +216,35 @@ kill_container() {
 
 [ "$1" = "--local" ] && shift 1 && IS_LOCAL=1
 
-# "--help|help" and "<command> --help" are special because we always want to
-# process them at the client end.
-handle_help_arg "$1"
-handle_help_arg "--$1"
-handle_help_arg "$2"
-
-if [ "$1" = "version" -a -z "$IS_LOCAL" ] ; then
-    # non-local "version" is special because we want to show the
-    # version of the script executed by the user rather than what is
-    # embedded in weaveexec.
-    echo "weave script $SCRIPT_VERSION"
-elif [ "$1" = "env" -a "$2" = "--restore" ] ; then
-    # "env --restore" is special because we always want to process it
-    # at the client end.
-    if [ "${ORIG_DOCKER_HOST-unset}" = "unset" ] ; then
-        echo "Nothing to restore. This is most likely because there was no preceding invocation of 'eval \$(weave env)' in this shell." >&2
-        exit 1
-    else
-        echo "DOCKER_HOST=$ORIG_DOCKER_HOST"
+# Handle special case $1 commands that run locally at the client end
+case "$1" in
+    help|--help)
+        usage_no_exit
         exit 0
-    fi
-fi
+        ;;
+    version)
+        # non-local "version" is special because we want to show the
+        # version of the script executed by the user rather than what is
+        # embedded in weaveexec.
+        [ -z "$IS_LOCAL" ] && echo "weave script $SCRIPT_VERSION"
+        ;;
+    env)
+        if [ "$2" = "--restore" ] ; then
+            # "env --restore" is special because we always want to process it
+            # at the client end.
+            if [ "${ORIG_DOCKER_HOST-unset}" = "unset" ] ; then
+                echo "Nothing to restore. This is most likely because there was no preceding invocation of 'eval \$(weave env)' in this shell." >&2
+                exit 1
+            else
+                echo "DOCKER_HOST=$ORIG_DOCKER_HOST"
+                exit 0
+            fi
+        fi
+        ;;
+    *)
+        [ "$2" = "--help" ] && usage_no_exit && exit 0
+        ;;
+esac
 
 if [ -z "$IS_LOCAL" ] ; then
     check_docker_version
@@ -1326,7 +1332,8 @@ case "$COMMAND" in
         ;;
     version)
         [ $# -eq 0 ] || usage
-        util_op ask-version $CONTAINER_NAME $IMAGE || true
+        VERSION="weave $(call_weave GET /report --get --data-urlencode "format={{ .Version }}" 2> /dev/null)" || VERSION=$(/home/weave/weaver --version)
+        echo $VERSION
         ;;
     attach-bridge)
         if detect_bridge_type ; then
