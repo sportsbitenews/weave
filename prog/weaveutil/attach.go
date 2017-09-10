@@ -8,7 +8,6 @@ import (
 	"strings"
 	"syscall"
 
-	docker "github.com/fsouza/go-dockerclient"
 	"github.com/vishvananda/netns"
 
 	weavenet "github.com/weaveworks/weave/net"
@@ -70,21 +69,6 @@ func attach(args []string) error {
 	return err
 }
 
-func containerPid(containerID string) (int, error) {
-	c, err := docker.NewVersionedClientFromEnv("1.18")
-	if err != nil {
-		return 0, fmt.Errorf("unable to connect to docker: %s", err)
-	}
-	container, err := c.InspectContainer(containerID)
-	if err != nil {
-		return 0, fmt.Errorf("unable to inspect container %s: %s", containerID, err)
-	}
-	if container.State.Pid == 0 {
-		return 0, fmt.Errorf("container %s not running", containerID)
-	}
-	return container.State.Pid, nil
-}
-
 func processExists(pid int) bool {
 	err := syscall.Kill(pid, syscall.Signal(0))
 	return err == nil || err == syscall.EPERM
@@ -127,13 +111,9 @@ func rewriteEtcHosts(args []string) error {
 	cidrs := args[2]
 	extraHosts := args[3:]
 
-	c, err := docker.NewVersionedClientFromEnv("1.18")
+	container, err := inspectContainer(containerID)
 	if err != nil {
-		return fmt.Errorf("unable to connect to docker: %s", err)
-	}
-	container, err := c.InspectContainer(containerID)
-	if err != nil {
-		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
+		return err
 	}
 
 	hostsPath := container.HostsPath

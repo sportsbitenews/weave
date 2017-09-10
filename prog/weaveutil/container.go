@@ -8,21 +8,42 @@ import (
 	docker "github.com/fsouza/go-dockerclient"
 )
 
+func inspectContainer(containerNameOrID string) (*docker.Container, error) {
+	c, err := docker.NewVersionedClientFromEnv("1.18")
+	if err != nil {
+		return nil, fmt.Errorf("unable to connect to docker: %s", err)
+	}
+
+	container, err := c.InspectContainer(containerNameOrID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to inspect container %s: %s", containerNameOrID, err)
+	}
+	return container, nil
+}
+
+func containerPid(containerID string) (int, error) {
+	container, err := inspectContainer(containerID)
+	if err != nil {
+		return 0, err
+
+	}
+
+	if container.State.Pid == 0 {
+		return 0, fmt.Errorf("container %s not running", containerID)
+	}
+	return container.State.Pid, nil
+}
+
 func containerID(args []string) error {
 	if len(args) < 1 {
 		cmdUsage("container-id", "<container-name-or-short-id>")
 	}
-	containerID := args[0]
 
-	c, err := docker.NewVersionedClientFromEnv("1.18")
+	container, err := inspectContainer(args[0])
 	if err != nil {
-		return fmt.Errorf("unable to connect to docker: %s", err)
+		return err
 	}
 
-	container, err := c.InspectContainer(containerID)
-	if err != nil {
-		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
-	}
 	fmt.Print(container.ID)
 	return nil
 }
@@ -31,16 +52,10 @@ func containerState(args []string) error {
 	if len(args) < 1 {
 		cmdUsage("container-state", "<container-id> [<image-name-or-id>]")
 	}
-	containerID := args[0]
 
-	c, err := docker.NewVersionedClientFromEnv("1.18")
+	container, err := inspectContainer(args[0])
 	if err != nil {
-		return fmt.Errorf("unable to connect to docker: %s", err)
-	}
-
-	container, err := c.InspectContainer(containerID)
-	if err != nil {
-		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
+		return err
 	}
 
 	if len(args) == 1 {
@@ -66,16 +81,10 @@ func containerFQDN(args []string) error {
 	if len(args) < 1 {
 		cmdUsage("container-fqdn", "<container-id>")
 	}
-	containerID := args[0]
 
-	c, err := docker.NewVersionedClientFromEnv("1.18")
+	container, err := inspectContainer(args[0])
 	if err != nil {
-		return fmt.Errorf("unable to connect to docker: %s", err)
-	}
-
-	container, err := c.InspectContainer(containerID)
-	if err != nil {
-		return fmt.Errorf("unable to inspect container %s: %s", containerID, err)
+		return err
 	}
 
 	fmt.Print(container.Config.Hostname, ".", container.Config.Domainname)
