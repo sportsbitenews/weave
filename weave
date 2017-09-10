@@ -1331,7 +1331,7 @@ case "$COMMAND" in
         ;;
     version)
         [ $# -eq 0 ] || usage
-        VERSION="weave $(call_weave GET /report --get --data-urlencode "format={{ .Version }}" 2> /dev/null)" || VERSION="$(/home/weave/weaver --version)"
+        VERSION="weave $(call_weave GET /report --get --data-urlencode "format={{ .Version }}" 2> /dev/null)" || VERSION="$(/home/weave/weaver $COVERAGE_ARGS --version)"
         echo $VERSION
         ;;
     attach-bridge)
